@@ -16,7 +16,6 @@ const Update = ({ setOpenUpdate, user }) => {
   });
 
   const upload = async (file) => {
-    console.log(file)
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -28,18 +27,16 @@ const Update = ({ setOpenUpdate, user }) => {
   };
 
   const handleChange = (e) => {
-    setTexts((prev) => ({ ...prev, [e.target.name]: [e.target.value] }));
+    // was putting value in an array; should be plain value
+    setTexts((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (user) => {
-      return makeRequest.put("/users", user);
-    },
+    (updatedUser) => makeRequest.put("/users", updatedUser),
     {
       onSuccess: () => {
-        // Invalidate and refetch
         queryClient.invalidateQueries(["user"]);
       },
     }
@@ -48,17 +45,15 @@ const Update = ({ setOpenUpdate, user }) => {
   const handleClick = async (e) => {
     e.preventDefault();
 
-    //TODO: find a better way to get image URL
-    
-    let coverUrl;
-    let profileUrl;
-    coverUrl = cover ? await upload(cover) : user.coverPic;
-    profileUrl = profile ? await upload(profile) : user.profilePic;
-    
+    // find URLs (keep existing if no new file)
+    const coverUrl = cover ? await upload(cover) : user.coverPic;
+    const profileUrl = profile ? await upload(profile) : user.profilePic;
+
     mutation.mutate({ ...texts, coverPic: coverUrl, profilePic: profileUrl });
     setOpenUpdate(false);
     setCover(null);
     setProfile(null);
+  }; // ← missing brace fixed
 
   return (
     <div className="update">
@@ -70,11 +65,7 @@ const Update = ({ setOpenUpdate, user }) => {
               <span>Cover Picture</span>
               <div className="imgContainer">
                 <img
-                  src={
-                    cover
-                      ? URL.createObjectURL(cover)
-                      : "/upload/" + user.coverPic
-                  }
+                  src={cover ? URL.createObjectURL(cover) : "/upload/" + user.coverPic}
                   alt=""
                 />
                 <CloudUploadIcon className="icon" />
@@ -86,15 +77,12 @@ const Update = ({ setOpenUpdate, user }) => {
               style={{ display: "none" }}
               onChange={(e) => setCover(e.target.files[0])}
             />
+
             <label htmlFor="profile">
               <span>Profile Picture</span>
               <div className="imgContainer">
                 <img
-                  src={
-                    profile
-                      ? URL.createObjectURL(profile)
-                      : "/upload/" + user.profilePic
-                  }
+                  src={profile ? URL.createObjectURL(profile) : "/upload/" + user.profilePic}
                   alt=""
                 />
                 <CloudUploadIcon className="icon" />
@@ -107,43 +95,25 @@ const Update = ({ setOpenUpdate, user }) => {
               onChange={(e) => setProfile(e.target.files[0])}
             />
           </div>
+
           <label>Email</label>
-          <input
-            type="text"
-            value={texts.email}
-            name="email"
-            onChange={handleChange}
-          />
+          <input type="text" value={texts.email} name="email" onChange={handleChange} />
+
           <label>Password</label>
-          <input
-            type="text"
-            value={texts.password}
-            name="password"
-            onChange={handleChange}
-          />
+          <input type="text" value={texts.password} name="password" onChange={handleChange} />
+
           <label>Name</label>
-          <input
-            type="text"
-            value={texts.name}
-            name="name"
-            onChange={handleChange}
-          />
+          <input type="text" value={texts.name} name="name" onChange={handleChange} />
+
           <label>Country / City</label>
-          <input
-            type="text"
-            name="city"
-            value={texts.city}
-            onChange={handleChange}
-          />
+          <input type="text" name="city" value={texts.city} onChange={handleChange} />
+
           <label>Website</label>
-          <input
-            type="text"
-            name="website"
-            value={texts.website}
-            onChange={handleChange}
-          />
+          <input type="text" name="website" value={texts.website} onChange={handleChange} />
+
           <button onClick={handleClick}>Update</button>
         </form>
+
         <button className="close" onClick={() => setOpenUpdate(false)}>
           close
         </button>
